@@ -13,16 +13,55 @@ if (array_key_exists('form_id', $_POST) && $_POST['form_id'] == 'eventimport_set
 		'event_source',
 		filter_input(INPUT_POST, 'event_source', FILTER_SANITIZE_STRING) 
 	);
+
+	$import_period = intval(filter_input(INPUT_POST, 'import_period', FILTER_SANITIZE_STRING));
 	
 	COption::SetOptionInt(
 		'bx_eventimport',
 		'import_period',
-		intval(filter_input(INPUT_POST, 'import_period', FILTER_SANITIZE_STRING))
+		$import_period
 	);
 
-	// here we do agent
+	COption::SetOptionString(
+		'bx_eventimport',
+		'IBLOCK_TYPE_ID',
+		filter_input(INPUT_POST, 'select-type', FILTER_SANITIZE_STRING)
+	);
+
+	COption::SetOptionString(
+		'bx_eventimport',
+		'IBLOCK_ID',
+		filter_input(INPUT_POST, 'select-iblock', FILTER_SANITIZE_STRING)
+	);
+
+	COption::SetOptionString(
+		'bx_eventimport',
+		'IBLOCK_SECTION_ID',
+		filter_input(INPUT_POST, 'select-section', FILTER_SANITIZE_STRING)
+	);
+
+	CAgent::RemoveAgent(
+		'CEventImportAgent::ImportEvents();',
+		'bx_eventimport'
+	);
+
+	CAgent::AddAgent(
+		'CEventImportAgent::ImportEvents();',
+		'bx_eventimport',
+		'N',
+		$import_period,
+		'',
+		'Y',
+		'',
+		'500'
+	);
 
 	header('Location: ichannels_manager.php');
+}
+
+$default = array();
+foreach (array('IBLOCK_TYPE_ID', 'IBLOCK_ID', 'IBLOCK_SECTION_ID') as $option) {
+	$default[$option] = COption::GetOptionString('bx_eventimport', $option, '');
 }
 
 $aTabs = array(
@@ -47,6 +86,8 @@ $tabControl->BeginNextTab();
 	<td><label for="event_source">Источник импорта</label></td>
 	<td><input type="text" name="event_source" id="event_source" class="strval strval-long" value="<?=COption::GetOptionString('bx_eventimport', 'event_source', '');?>" /></td>
 </tr>
+
+<? require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin/ichannels_iblock_form.php'); ?>
 
 <tr>
 	<td><label for="import_period">Частота обновлений (в секундах)</label></td>
